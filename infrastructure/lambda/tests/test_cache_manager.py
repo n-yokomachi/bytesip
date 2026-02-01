@@ -4,16 +4,11 @@ TDD tests for DynamoDB cache management functionality.
 """
 
 import time
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from bytesip_news_fetcher.cache_manager import CacheManager
 from bytesip_news_fetcher.config import (
     CACHE_TTL_SECONDS,
-    DYNAMODB_PK_PREFIX,
-    DYNAMODB_SK_ITEM_PREFIX,
     MAX_ITEMS_PER_SOURCE,
 )
 from bytesip_news_fetcher.models import NewsItem
