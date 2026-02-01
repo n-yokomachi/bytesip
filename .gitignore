@@ -1,0 +1,41 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# pytest
+.pytest_cache/
+
+# CDK
+cdk.out/
+.cdk.staging/
+
+# AWS SAM (legacy)
+.aws-sam/
+
+# Logs
+*.log
