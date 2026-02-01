@@ -1,1 +1,0 @@
-"""ByteSip CDK Stack package."""
