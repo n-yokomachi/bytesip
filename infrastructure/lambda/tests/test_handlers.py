@@ -5,11 +5,12 @@ TDD tests for Qiita, Zenn, and GitHub handlers.
 
 from unittest.mock import MagicMock, patch
 
-from bytesip_news_fetcher.handlers.base import BaseHandler
+import pytest
+
+from bytesip_news_fetcher.handlers.github import GitHubHandler
 from bytesip_news_fetcher.handlers.qiita import QiitaHandler
 from bytesip_news_fetcher.handlers.zenn import ZennHandler
-from bytesip_news_fetcher.handlers.github import GitHubHandler
-from bytesip_news_fetcher.models import NewsItem, SourceError
+from bytesip_news_fetcher.models import SourceError
 
 
 class TestQiitaHandler:
@@ -60,22 +61,18 @@ class TestQiitaHandler:
 
         with patch("requests.get", return_value=mock_response):
             handler = QiitaHandler(access_token="test_token")
-            try:
+            with pytest.raises(SourceError) as exc_info:
                 handler.fetch()
-                assert False, "Should raise SourceError"
-            except SourceError as e:
-                assert e.error_type == "rate_limit"
-                assert e.source == "qiita"
+            assert exc_info.value.error_type == "rate_limit"
+            assert exc_info.value.source == "qiita"
 
     def test_fetch_handles_connection_error(self) -> None:
         """Fetch should raise SourceError on connection error."""
         with patch("requests.get", side_effect=Exception("Connection failed")):
             handler = QiitaHandler(access_token="test_token")
-            try:
+            with pytest.raises(SourceError) as exc_info:
                 handler.fetch()
-                assert False, "Should raise SourceError"
-            except SourceError as e:
-                assert e.error_type == "connection_error"
+            assert exc_info.value.error_type == "connection_error"
 
     def test_summary_strips_markdown(self) -> None:
         """Summary should be plain text without markdown."""
@@ -147,22 +144,18 @@ class TestZennHandler:
 
         with patch("feedparser.parse", return_value=mock_feed):
             handler = ZennHandler()
-            try:
+            with pytest.raises(SourceError) as exc_info:
                 handler.fetch()
-                assert False, "Should raise SourceError"
-            except SourceError as e:
-                assert e.error_type == "parse_error"
-                assert e.source == "zenn"
+            assert exc_info.value.error_type == "parse_error"
+            assert exc_info.value.source == "zenn"
 
     def test_fetch_handles_connection_error(self) -> None:
         """Fetch should raise SourceError on connection error."""
         with patch("feedparser.parse", side_effect=Exception("Connection failed")):
             handler = ZennHandler()
-            try:
+            with pytest.raises(SourceError) as exc_info:
                 handler.fetch()
-                assert False, "Should raise SourceError"
-            except SourceError as e:
-                assert e.error_type == "connection_error"
+            assert exc_info.value.error_type == "connection_error"
 
 
 class TestGitHubHandler:
@@ -216,22 +209,18 @@ class TestGitHubHandler:
 
         with patch("requests.get", return_value=mock_response):
             handler = GitHubHandler(access_token="test_token")
-            try:
+            with pytest.raises(SourceError) as exc_info:
                 handler.fetch()
-                assert False, "Should raise SourceError"
-            except SourceError as e:
-                assert e.error_type == "rate_limit"
-                assert e.source == "github"
+            assert exc_info.value.error_type == "rate_limit"
+            assert exc_info.value.source == "github"
 
     def test_fetch_handles_connection_error(self) -> None:
         """Fetch should raise SourceError on connection error."""
         with patch("requests.get", side_effect=Exception("Connection failed")):
             handler = GitHubHandler(access_token="test_token")
-            try:
+            with pytest.raises(SourceError) as exc_info:
                 handler.fetch()
-                assert False, "Should raise SourceError"
-            except SourceError as e:
-                assert e.error_type == "connection_error"
+            assert exc_info.value.error_type == "connection_error"
 
     def test_handles_missing_description(self) -> None:
         """Fetch should handle repos with no description."""

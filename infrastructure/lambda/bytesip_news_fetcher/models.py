@@ -8,9 +8,8 @@ This module defines the core data structures used throughout the application:
 - CacheEntry: DynamoDB cache structure
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
-
 
 SourceType = Literal["qiita", "zenn", "github"]
 ErrorType = Literal["connection_error", "rate_limit", "parse_error"]

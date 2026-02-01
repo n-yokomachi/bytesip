@@ -49,7 +49,7 @@ class ZennHandler(BaseHandler):
                 source="zenn",
                 error_type="connection_error",
                 message=str(e),
-            )
+            ) from e
 
     def _build_feed_url(self, tags: list[str] | None) -> str:
         """Build RSS feed URL.

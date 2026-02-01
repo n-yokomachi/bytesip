@@ -79,7 +79,7 @@ class GitHubHandler(BaseHandler):
                 source="github",
                 error_type="connection_error",
                 message=str(e),
-            )
+            ) from e
 
     def _build_params(self, tags: list[str] | None) -> dict:
         """Build query parameters for GitHub Search API.
