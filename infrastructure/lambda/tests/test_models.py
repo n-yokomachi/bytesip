@@ -1,14 +1,13 @@
 """Tests for data models."""
 
-import pytest
 from bytesip_news_fetcher.models import (
+    CacheEntry,
+    FetchNewsRequest,
+    FetchNewsResponse,
     NewsItem,
     NewsRequest,
     NewsResponse,
-    FetchNewsRequest,
-    FetchNewsResponse,
     SourceError,
-    CacheEntry,
     generate_news_id,
 )
 

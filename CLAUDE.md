@@ -43,3 +43,9 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Load entire `.kiro/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/kiro:steering-custom`)
+
+## Git Rules
+- コミットメッセージは日本語で記述
+- Conventional Commits形式を使用（feat:, fix:, refactor:, etc.）
+- Co-Authored-Byは含めない
+- PRにClaude Code生成フッター（🤖 Generated with...）を含めない

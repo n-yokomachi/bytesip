@@ -8,9 +8,8 @@ This module defines the core data structures used throughout the application:
 - CacheEntry: DynamoDB cache structure
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
-
 
 SourceType = Literal["qiita", "zenn", "github"]
 ErrorType = Literal["connection_error", "rate_limit", "parse_error"]
@@ -96,9 +95,8 @@ class FetchNewsRequest:
     force_refresh: bool = False
 
 
-@dataclass
-class SourceError:
-    """Error information for a failed source fetch.
+class SourceError(Exception):
+    """Error for a failed source fetch.
 
     Attributes:
         source: The source that failed
@@ -106,9 +104,11 @@ class SourceError:
         message: Human-readable error description
     """
 
-    source: SourceType
-    error_type: ErrorType
-    message: str
+    def __init__(self, source: SourceType, error_type: ErrorType, message: str) -> None:
+        self.source = source
+        self.error_type = error_type
+        self.message = message
+        super().__init__(message)
 
 
 @dataclass
