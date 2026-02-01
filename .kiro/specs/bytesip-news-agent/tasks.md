@@ -41,8 +41,8 @@
 
 ---
 
-- [ ] 3. 外部ソースハンドラー
-- [ ] 3.1 (P) QiitaHandler 実装
+- [x] 3. 外部ソースハンドラー
+- [x] 3.1 (P) QiitaHandler 実装
   - Qiita API v2 `/api/v2/items` からトレンド記事を取得
   - Bearer トークンによる認証処理
   - タグフィルタリング（query パラメータで `tag:python` 形式）
@@ -50,7 +50,7 @@
   - body 冒頭 200 文字から要約を生成（Markdown をプレーンテキスト化）
   - _Requirements: 1.1, 4.1, 4.2, 6.1, 6.2_
 
-- [ ] 3.2 (P) ZennHandler 実装
+- [x] 3.2 (P) ZennHandler 実装
   - Zenn RSS フィード（`https://zenn.dev/feed`）をパース
   - feedparser ライブラリを使用した XML 処理
   - タグ指定時はトピック別 RSS（`/topics/{tag}/feed`）を使用
@@ -58,7 +58,7 @@
   - パースエラー時のエラーハンドリング
   - _Requirements: 1.1, 4.1, 4.2, 6.1_
 
-- [ ] 3.3 (P) GitHubHandler 実装
+- [x] 3.3 (P) GitHubHandler 実装
   - GitHub Search API `/search/repositories` からトレンドリポジトリを取得
   - `pushed:>YYYY-MM-DD stars:>100` クエリでトレンド代替
   - Personal Access Token による認証処理
@@ -68,15 +68,15 @@
 
 ---
 
-- [ ] 4. ニュース取得オーケストレーション
-- [ ] 4.1 NewsFetcher 並列取得実装
+- [x] 4. ニュース取得オーケストレーション
+- [x] 4.1 NewsFetcher 並列取得実装
   - ThreadPoolExecutor（max_workers=3）による各ソースハンドラーの並列実行
   - キャッシュファースト戦略（キャッシュ確認 → API 呼び出し → キャッシュ更新）
   - ソース指定パラメータによるフィルタリング（未指定時は全ソース）
   - as_completed() による完了順の結果収集
   - _Requirements: 1.1, 1.4, 1.5_
 
-- [ ] 4.2 Graceful Degradation 実装
+- [x] 4.2 Graceful Degradation 実装
   - 各ソースのエラーを SourceError として収集（接続エラー、Rate Limit、パースエラー）
   - 成功したソースの結果のみを返却
   - 全ソース失敗時は 503 エラーを返却
