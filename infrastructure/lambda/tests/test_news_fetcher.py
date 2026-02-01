@@ -9,14 +9,16 @@ from bytesip_news_fetcher.models import NewsItem, SourceError
 from bytesip_news_fetcher.news_fetcher import NewsFetcher
 
 
-def create_mock_news_item(source: str, item_id: str) -> NewsItem:
+def create_mock_news_item(
+    source: str, item_id: str, tags: list[str] | None = None
+) -> NewsItem:
     """Helper to create mock NewsItem."""
     return NewsItem(
         id=f"{source}_{item_id}",
         title=f"Test Article {item_id}",
         url=f"https://example.com/{item_id}",
         summary="Test summary",
-        tags=["python"],
+        tags=tags if tags is not None else ["python"],
         source=source,
     )
 
@@ -265,3 +267,70 @@ class TestNewsFetcherTagFiltering:
         fetcher.fetch(sources=["qiita"], tags=["python", "rust"])
 
         mock_handlers["qiita"].fetch.assert_called_once_with(tags=["python", "rust"])
+
+    def test_filters_cached_items_by_tags(self) -> None:
+        """Should filter cached items by tags."""
+        cached_items = [
+            create_mock_news_item("qiita", "1", tags=["python", "django"]),
+            create_mock_news_item("qiita", "2", tags=["rust", "wasm"]),
+            create_mock_news_item("qiita", "3", tags=["python", "fastapi"]),
+        ]
+        mock_cache = MagicMock()
+        mock_cache.get.return_value = cached_items
+
+        mock_handlers = {
+            "qiita": MagicMock(),
+        }
+
+        fetcher = NewsFetcher(
+            cache_manager=mock_cache,
+            handlers=mock_handlers,
+        )
+        response = fetcher.fetch(sources=["qiita"], tags=["python"])
+
+        assert len(response.items) == 2
+        assert all("python" in item.tags for item in response.items)
+        mock_handlers["qiita"].fetch.assert_not_called()
+
+    def test_returns_all_cached_items_when_no_tags(self) -> None:
+        """Should return all cached items when tags is None."""
+        cached_items = [
+            create_mock_news_item("qiita", "1", tags=["python"]),
+            create_mock_news_item("qiita", "2", tags=["rust"]),
+        ]
+        mock_cache = MagicMock()
+        mock_cache.get.return_value = cached_items
+
+        mock_handlers = {
+            "qiita": MagicMock(),
+        }
+
+        fetcher = NewsFetcher(
+            cache_manager=mock_cache,
+            handlers=mock_handlers,
+        )
+        response = fetcher.fetch(sources=["qiita"])
+
+        assert len(response.items) == 2
+
+    def test_tag_filter_is_case_insensitive(self) -> None:
+        """Should filter by tags case-insensitively."""
+        cached_items = [
+            create_mock_news_item("qiita", "1", tags=["Python", "Django"]),
+            create_mock_news_item("qiita", "2", tags=["RUST"]),
+        ]
+        mock_cache = MagicMock()
+        mock_cache.get.return_value = cached_items
+
+        mock_handlers = {
+            "qiita": MagicMock(),
+        }
+
+        fetcher = NewsFetcher(
+            cache_manager=mock_cache,
+            handlers=mock_handlers,
+        )
+        response = fetcher.fetch(sources=["qiita"], tags=["python"])
+
+        assert len(response.items) == 1
+        assert response.items[0].id == "qiita_1"

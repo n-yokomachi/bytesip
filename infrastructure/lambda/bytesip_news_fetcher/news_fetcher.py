@@ -99,7 +99,7 @@ class NewsFetcher:
         if not force_refresh:
             cached = self._cache.get(source)
             if cached is not None:
-                return cached
+                return self._filter_by_tags(cached, tags)
 
         # Fetch from API
         handler = self._handlers[source]
@@ -109,3 +109,26 @@ class NewsFetcher:
         self._cache.set(source, items)
 
         return items
+
+    def _filter_by_tags(
+        self,
+        items: list[NewsItem],
+        tags: list[str] | None,
+    ) -> list[NewsItem]:
+        """Filter items by tags.
+
+        Args:
+            items: List of NewsItem to filter
+            tags: Tags to filter by (None = no filter)
+
+        Returns:
+            Filtered list of NewsItem
+        """
+        if not tags:
+            return items
+
+        return [
+            item
+            for item in items
+            if any(tag.lower() in [t.lower() for t in item.tags] for tag in tags)
+        ]
