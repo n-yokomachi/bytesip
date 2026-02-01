@@ -120,6 +120,11 @@ class TestCacheManagerSet:
     def test_set_stores_items_in_dynamodb(self) -> None:
         """Verify items are stored with correct attributes."""
         mock_table = MagicMock()
+        mock_batch = MagicMock()
+        mock_table.batch_writer.return_value.__enter__ = MagicMock(
+            return_value=mock_batch
+        )
+        mock_table.batch_writer.return_value.__exit__ = MagicMock(return_value=False)
 
         manager = CacheManager(mock_table)
         items = [
@@ -135,8 +140,8 @@ class TestCacheManagerSet:
 
         manager.set("qiita", items)
 
-        mock_table.put_item.assert_called_once()
-        call_kwargs = mock_table.put_item.call_args[1]
+        mock_batch.put_item.assert_called_once()
+        call_kwargs = mock_batch.put_item.call_args[1]
         item = call_kwargs["Item"]
 
         assert item["PK"] == "SOURCE#qiita"
@@ -147,6 +152,11 @@ class TestCacheManagerSet:
     def test_set_limits_items_to_max_per_source(self) -> None:
         """Only store up to MAX_ITEMS_PER_SOURCE items."""
         mock_table = MagicMock()
+        mock_batch = MagicMock()
+        mock_table.batch_writer.return_value.__enter__ = MagicMock(
+            return_value=mock_batch
+        )
+        mock_table.batch_writer.return_value.__exit__ = MagicMock(return_value=False)
 
         manager = CacheManager(mock_table)
 
@@ -166,11 +176,16 @@ class TestCacheManagerSet:
         manager.set("qiita", items)
 
         # Should only call put_item MAX_ITEMS_PER_SOURCE times
-        assert mock_table.put_item.call_count == MAX_ITEMS_PER_SOURCE
+        assert mock_batch.put_item.call_count == MAX_ITEMS_PER_SOURCE
 
     def test_set_calculates_ttl_correctly(self) -> None:
         """TTL should be current time + CACHE_TTL_SECONDS."""
         mock_table = MagicMock()
+        mock_batch = MagicMock()
+        mock_table.batch_writer.return_value.__enter__ = MagicMock(
+            return_value=mock_batch
+        )
+        mock_table.batch_writer.return_value.__exit__ = MagicMock(return_value=False)
 
         manager = CacheManager(mock_table)
         items = [
@@ -188,7 +203,7 @@ class TestCacheManagerSet:
         manager.set("qiita", items)
         after_time = int(time.time())
 
-        call_kwargs = mock_table.put_item.call_args[1]
+        call_kwargs = mock_batch.put_item.call_args[1]
         ttl = call_kwargs["Item"]["ttl"]
 
         expected_min = before_time + CACHE_TTL_SECONDS
@@ -203,6 +218,11 @@ class TestCacheManagerInvalidate:
     def test_invalidate_deletes_all_items_for_source(self) -> None:
         """Delete all cached items for the specified source."""
         mock_table = MagicMock()
+        mock_batch = MagicMock()
+        mock_table.batch_writer.return_value.__enter__ = MagicMock(
+            return_value=mock_batch
+        )
+        mock_table.batch_writer.return_value.__exit__ = MagicMock(return_value=False)
         mock_table.query.return_value = {
             "Items": [
                 {"PK": "SOURCE#qiita", "SK": "ITEM#qiita_1"},
@@ -213,17 +233,22 @@ class TestCacheManagerInvalidate:
         manager = CacheManager(mock_table)
         manager.invalidate("qiita")
 
-        # Should query to find items, then delete each one
+        # Should query to find items, then delete each one via batch
         mock_table.query.assert_called_once()
-        assert mock_table.delete_item.call_count == 2
+        assert mock_batch.delete_item.call_count == 2
 
     def test_invalidate_does_nothing_when_no_cache(self) -> None:
         """Do nothing when no cache exists for the source."""
         mock_table = MagicMock()
+        mock_batch = MagicMock()
+        mock_table.batch_writer.return_value.__enter__ = MagicMock(
+            return_value=mock_batch
+        )
+        mock_table.batch_writer.return_value.__exit__ = MagicMock(return_value=False)
         mock_table.query.return_value = {"Items": []}
 
         manager = CacheManager(mock_table)
         manager.invalidate("github")
 
         mock_table.query.assert_called_once()
-        mock_table.delete_item.assert_not_called()
+        mock_batch.delete_item.assert_not_called()

@@ -44,20 +44,29 @@ class CacheManager:
             Expired items (past TTL) are filtered out.
         """
         pk = f"{DYNAMODB_PK_PREFIX}{source}"
+        all_items: list[dict] = []
 
-        response = self._table.query(
-            KeyConditionExpression=Key("PK").eq(pk)
+        # Query with pagination
+        query_params = {
+            "KeyConditionExpression": Key("PK").eq(pk)
             & Key("SK").begins_with(DYNAMODB_SK_ITEM_PREFIX)
-        )
+        }
 
-        items = response.get("Items", [])
-        if not items:
+        while True:
+            response = self._table.query(**query_params)
+            all_items.extend(response.get("Items", []))
+
+            if "LastEvaluatedKey" not in response:
+                break
+            query_params["ExclusiveStartKey"] = response["LastEvaluatedKey"]
+
+        if not all_items:
             return None
 
         current_time = int(time.time())
         valid_items = []
 
-        for item in items:
+        for item in all_items:
             if item.get("ttl", 0) > current_time:
                 valid_items.append(
                     NewsItem(
@@ -85,22 +94,23 @@ class CacheManager:
         # Limit items to MAX_ITEMS_PER_SOURCE
         items_to_store = items[:MAX_ITEMS_PER_SOURCE]
 
-        for item in items_to_store:
-            sk = f"{DYNAMODB_SK_ITEM_PREFIX}{item.id}"
+        with self._table.batch_writer() as batch:
+            for item in items_to_store:
+                sk = f"{DYNAMODB_SK_ITEM_PREFIX}{item.id}"
 
-            self._table.put_item(
-                Item={
-                    "PK": pk,
-                    "SK": sk,
-                    "id": item.id,
-                    "title": item.title,
-                    "url": item.url,
-                    "summary": item.summary,
-                    "tags": item.tags,
-                    "source": item.source,
-                    "ttl": ttl,
-                }
-            )
+                batch.put_item(
+                    Item={
+                        "PK": pk,
+                        "SK": sk,
+                        "id": item.id,
+                        "title": item.title,
+                        "url": item.url,
+                        "summary": item.summary,
+                        "tags": item.tags,
+                        "source": item.source,
+                        "ttl": ttl,
+                    }
+                )
 
     def invalidate(self, source: SourceType) -> None:
         """Remove all cached items for a source.
@@ -109,19 +119,29 @@ class CacheManager:
             source: The news source (qiita, zenn, github)
         """
         pk = f"{DYNAMODB_PK_PREFIX}{source}"
+        items_to_delete: list[dict] = []
 
-        response = self._table.query(
-            KeyConditionExpression=Key("PK").eq(pk)
+        # Query with pagination
+        query_params = {
+            "KeyConditionExpression": Key("PK").eq(pk)
             & Key("SK").begins_with(DYNAMODB_SK_ITEM_PREFIX),
-            ProjectionExpression="PK, SK",
-        )
+            "ProjectionExpression": "PK, SK",
+        }
 
-        items = response.get("Items", [])
+        while True:
+            response = self._table.query(**query_params)
+            items_to_delete.extend(response.get("Items", []))
 
-        for item in items:
-            self._table.delete_item(
-                Key={
-                    "PK": item["PK"],
-                    "SK": item["SK"],
-                }
-            )
+            if "LastEvaluatedKey" not in response:
+                break
+            query_params["ExclusiveStartKey"] = response["LastEvaluatedKey"]
+
+        # Batch delete
+        with self._table.batch_writer() as batch:
+            for item in items_to_delete:
+                batch.delete_item(
+                    Key={
+                        "PK": item["PK"],
+                        "SK": item["SK"],
+                    }
+                )
