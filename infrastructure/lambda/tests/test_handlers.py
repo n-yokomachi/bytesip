@@ -3,7 +3,6 @@
 TDD tests for Qiita, Zenn, and GitHub handlers.
 """
 
-import time
 from unittest.mock import MagicMock, patch
 
 from bytesip_news_fetcher.handlers.base import BaseHandler

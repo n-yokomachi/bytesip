@@ -17,6 +17,7 @@ class QiitaHandler(BaseHandler):
 
     BASE_URL = "https://qiita.com/api/v2/items"
     SUMMARY_MAX_LENGTH = 200
+    REQUEST_TIMEOUT = 10
 
     def __init__(self, access_token: str) -> None:
         """Initialize QiitaHandler.
@@ -46,6 +47,7 @@ class QiitaHandler(BaseHandler):
                 self.BASE_URL,
                 headers=headers,
                 params=params,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 403:

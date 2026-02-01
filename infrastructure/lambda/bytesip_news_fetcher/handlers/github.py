@@ -18,6 +18,7 @@ class GitHubHandler(BaseHandler):
     SEARCH_URL = "https://api.github.com/search/repositories"
     MIN_STARS = 100
     DAYS_LOOKBACK = 7
+    REQUEST_TIMEOUT = 10
 
     def __init__(self, access_token: str) -> None:
         """Initialize GitHubHandler.
@@ -50,16 +51,23 @@ class GitHubHandler(BaseHandler):
                 self.SEARCH_URL,
                 headers=headers,
                 params=params,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 403:
-                remaining = response.headers.get("X-RateLimit-Remaining", "0")
+                remaining = response.headers.get("X-RateLimit-Remaining")
                 if remaining == "0":
                     raise SourceError(
                         source="github",
                         error_type="rate_limit",
                         message="GitHub API rate limit exceeded",
                     )
+                # Other 403 errors (e.g., insufficient permissions)
+                raise SourceError(
+                    source="github",
+                    error_type="rate_limit",
+                    message=f"GitHub API access denied: {response.text}",
+                )
 
             response.raise_for_status()
             return self._parse_response(response.json())
