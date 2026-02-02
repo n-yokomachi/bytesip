@@ -116,8 +116,8 @@
   - エージェントエントリポイント（entrypoint.py）の作成
   - _Requirements: 1.1_
 
-- [ ] 6.2 AgentCore 設定とデプロイ
-  - `agentcore configure -e bytesip_agent.py` でエージェント設定
+- [x] 6.2 AgentCore 設定とデプロイ
+  - `agentcore configure -e entrypoint.py` でエージェント設定
   - AgentCore Memory (STM) の有効化
   - `agentcore deploy` でエージェントを AgentCore Runtime にデプロイ
   - `agentcore status` でデプロイ確認

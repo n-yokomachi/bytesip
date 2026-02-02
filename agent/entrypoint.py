@@ -21,6 +21,8 @@ from bytesip_agent.tools import fetch_news
 # Configuration from environment variables
 AWS_REGION = os.environ.get("AWS_REGION", "ap-northeast-1")
 MEMORY_NAME = os.environ.get("BYTESIP_MEMORY_NAME", "bytesip-agent-memory")
+# Memory ID from toolkit deployment (set by agentcore deploy)
+AGENTCORE_MEMORY_ID = os.environ.get("AGENTCORE_MEMORY_ID")
 
 # System prompt for the ByteSip agent
 SYSTEM_PROMPT = """\
@@ -63,25 +65,34 @@ _agent: Agent | None = None
 
 
 def _get_or_create_memory() -> str:
-    """Get or create the AgentCore Memory instance."""
+    """Get or create the AgentCore Memory instance.
+
+    When deployed via agentcore toolkit, uses the pre-configured memory ID.
+    For local development, falls back to creating a new memory.
+    """
     global _memory_id
     if _memory_id is None:
-        client = MemoryClient(region_name=AWS_REGION)
+        # Use toolkit-provided memory ID if available (production)
+        if AGENTCORE_MEMORY_ID:
+            _memory_id = AGENTCORE_MEMORY_ID
+        else:
+            # Local development: create or find memory
+            client = MemoryClient(region_name=AWS_REGION)
 
-        # Try to find existing memory by name
-        memories = client.list_memories()
-        for memory in memories.get("memories", []):
-            if memory.get("name") == MEMORY_NAME:
+            # Try to find existing memory by name
+            memories = client.list_memories()
+            for memory in memories.get("memories", []):
+                if memory.get("name") == MEMORY_NAME:
+                    _memory_id = memory["id"]
+                    break
+
+            # Create new memory if not found
+            if _memory_id is None:
+                memory = client.create_memory(
+                    name=MEMORY_NAME,
+                    description="ByteSip agent memory for session management",
+                )
                 _memory_id = memory["id"]
-                break
-
-        # Create new memory if not found
-        if _memory_id is None:
-            memory = client.create_memory(
-                name=MEMORY_NAME,
-                description="ByteSip agent memory for session management",
-            )
-            _memory_id = memory["id"]
 
     return _memory_id
 
@@ -111,9 +122,9 @@ def _create_agent(session_id: str, actor_id: str) -> Agent:
         region_name=AWS_REGION,
     )
 
-    # Configure Bedrock model
+    # Configure Bedrock model with JP cross-region inference
     model = BedrockModel(
-        model_id="anthropic.claude-sonnet-4-20250514-v1:0",
+        model_id="jp.anthropic.claude-haiku-4-5-20251001-v1:0",
         region_name=AWS_REGION,
     )
 

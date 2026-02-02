@@ -37,5 +37,9 @@ cdk.out/
 # AWS SAM (legacy)
 .aws-sam/
 
+# Bedrock AgentCore
+.bedrock_agentcore/
+.bedrock_agentcore.yaml
+
 # Logs
 *.log
