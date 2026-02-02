@@ -16,16 +16,16 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Configuration
-AWS_REGION = os.environ.get("AWS_REGION", "ap-northeast-1")
+AWS_REGION = os.environ.get("AWS_REGION", "")
 AWS_ACCOUNT_ID = os.environ.get("AWS_ACCOUNT_ID", "")
-AGENT_ID = os.environ.get("BYTESIP_AGENT_ID", "bytesip-BzLD5m92MA")
+AGENT_ID = os.environ.get("BYTESIP_AGENT_ID", "")
 
 # Build ARN from components or use full ARN if provided
 AGENT_ARN = os.environ.get("BYTESIP_AGENT_ARN", "")
-if not AGENT_ARN and AWS_ACCOUNT_ID:
+if not AGENT_ARN and AWS_ACCOUNT_ID and AGENT_ID:
     AGENT_ARN = (
         f"arn:aws:bedrock-agentcore:{AWS_REGION}:{AWS_ACCOUNT_ID}"
-        f":runtime/agent/{AGENT_ID}"
+        f":runtime/{AGENT_ID}"
     )
 
 # Page configuration

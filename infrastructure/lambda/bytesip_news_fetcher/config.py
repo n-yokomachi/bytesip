@@ -40,17 +40,17 @@ def get_dynamodb_config() -> DynamoDBConfig:
     """Get DynamoDB configuration from environment variables.
 
     Environment Variables:
-        DYNAMODB_TABLE_NAME: Table name (default: bytesip-news-cache)
+        DYNAMODB_TABLE_NAME: Table name (required)
         DYNAMODB_ENDPOINT_URL: Custom endpoint (for local development)
-        AWS_REGION: AWS region (default: ap-northeast-1)
+        AWS_REGION: AWS region (required)
 
     Returns:
         DynamoDBConfig instance
     """
     return DynamoDBConfig(
-        table_name=os.getenv("DYNAMODB_TABLE_NAME", "bytesip-news-cache"),
+        table_name=os.getenv("DYNAMODB_TABLE_NAME", ""),
         endpoint_url=os.getenv("DYNAMODB_ENDPOINT_URL"),
-        region_name=os.getenv("AWS_REGION", "ap-northeast-1"),
+        region_name=os.getenv("AWS_REGION", ""),
     )
 
 

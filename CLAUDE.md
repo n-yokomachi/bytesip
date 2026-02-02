@@ -44,6 +44,9 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/kiro:steering-custom`)
 
+## Coding Rules
+- 環境変数にデフォルト値を設定しない（設定不備や.env読み込みエラーを早期に検出するため）
+
 ## Git Rules
 - コミットメッセージは日本語で記述
 - Conventional Commits形式を使用（feat:, fix:, refactor:, etc.）
