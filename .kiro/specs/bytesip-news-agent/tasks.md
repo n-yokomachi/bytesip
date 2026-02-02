@@ -123,21 +123,33 @@
   - `agentcore status` でデプロイ確認
   - _Requirements: 1.1, 5.1, 5.2, 5.3_
 
+---
+
+- [ ] 7. Streamlit UI（優先）
+- [ ] 7.1 Streamlit UI 実装
+  - チャットインターフェースの構築
+  - AgentCore Runtime への接続（agentcore invoke）
+  - ユーザーメッセージの送信とエージェントレスポンスの表示
+  - ニュース一覧の整形表示（タイトル、URL、要約、タグ）
+  - エラーメッセージの表示
+  - _Requirements: 1.2, 1.3_
+
+---
+
+- [ ] 9. インフラストラクチャデプロイ
+- [ ] 9.1 CDK デプロイ
+  - `cdk deploy` で DynamoDB テーブルと Lambda 関数をデプロイ
+  - SSM パラメータに API トークンを設定
+  - Lambda 関数の動作確認
+  - _Requirements: 1.4, 1.5_
+
+---
+
 - [ ] 6.3 AgentCore Gateway 統合
   - Lambda 関数を AgentCore Gateway に登録
   - fetch_news ツールの MCP 定義
   - Gateway 経由での Lambda 呼び出しテスト
   - _Requirements: 1.1_
-
----
-
-- [ ] 7. Streamlit UI
-- [ ] 7.1 Streamlit UI 実装
-  - チャットインターフェースの構築
-  - ユーザーメッセージの送信とエージェントレスポンスの表示
-  - ニュース一覧の整形表示（タイトル、URL、要約、タグ）
-  - エラーメッセージの表示
-  - _Requirements: 1.2, 1.3_
 
 ---
 
