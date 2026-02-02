@@ -85,21 +85,21 @@
 
 ---
 
-- [ ] 5. Strands Agent 実装
-- [ ] 5.1 基本エージェント構成
+- [x] 5. Strands Agent 実装
+- [x] 5.1 基本エージェント構成
   - Strands Agents SDK を使用したエージェント初期化
   - BedrockModel プロバイダーの設定
   - fetch_news ツールの定義と AgentCore Gateway への登録
   - _Requirements: 1.1_
 
-- [ ] 5.2 AgentCore Memory STM 連携
+- [x] 5.2 AgentCore Memory STM 連携
   - AgentCore Memory の初期化とセッション管理
   - 提案済みニュース ID の取得機能（proposed_ids リスト）
   - 新規提案 ID の記録機能
   - セッション内での重複排除ロジック
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 5.3 フィルタリングと件数制御
+- [x] 5.3 フィルタリングと件数制御
   - ソース指定フィルタ（Qiita/Zenn/GitHub 個別指定）
   - 件数指定（ユーザー指定件数、上限各10件・合計30件）
   - 技術タグフィルタ（タグ名による絞り込み）
