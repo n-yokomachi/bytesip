@@ -125,8 +125,8 @@
 
 ---
 
-- [ ] 7. Streamlit UI（優先）
-- [ ] 7.1 Streamlit UI 実装
+- [x] 7. Streamlit UI（優先）
+- [x] 7.1 Streamlit UI 実装
   - チャットインターフェースの構築
   - AgentCore Runtime への接続（agentcore invoke）
   - ユーザーメッセージの送信とエージェントレスポンスの表示
