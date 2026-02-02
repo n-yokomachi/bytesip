@@ -5,6 +5,18 @@ TDD tests for AgentCore Runtime integration.
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def reset_global_state():
+    """Reset global state before and after each test."""
+    import entrypoint
+
+    entrypoint._memory_id = None
+    yield
+    entrypoint._memory_id = None
+
 
 class TestInvokeEntrypoint:
     """Test the invoke entrypoint function."""
@@ -63,6 +75,22 @@ class TestInvokeEntrypoint:
         result = invoke({"prompt": "テスト"})
 
         assert result["session_id"].startswith("session_")
+
+    @patch("entrypoint._create_agent")
+    def test_invoke_returns_error_on_exception(
+        self, mock_create_agent: MagicMock
+    ) -> None:
+        """invoke should return error message when exception occurs."""
+        from entrypoint import invoke
+
+        mock_create_agent.side_effect = Exception("テスト用エラー")
+
+        result = invoke({"prompt": "テスト", "session_id": "error_session"})
+
+        assert "error" in result
+        assert result["session_id"] == "error_session"
+        assert "テスト用エラー" in result["result"]
+        assert result["error"] == "テスト用エラー"
 
 
 class TestCreateAgent:
@@ -127,9 +155,6 @@ class TestGetOrCreateMemory:
         """Should create new memory when none exists."""
         import entrypoint
 
-        # Reset global state
-        entrypoint._memory_id = None
-
         mock_client = MagicMock()
         mock_client.list_memories.return_value = {"memories": []}
         mock_client.create_memory.return_value = {"id": "new_memory_id"}
@@ -146,9 +171,6 @@ class TestGetOrCreateMemory:
     ) -> None:
         """Should reuse existing memory with matching name."""
         import entrypoint
-
-        # Reset global state
-        entrypoint._memory_id = None
 
         mock_client = MagicMock()
         mock_client.list_memories.return_value = {
@@ -168,13 +190,10 @@ class TestGetOrCreateMemory:
         """Should cache memory_id after first call."""
         import entrypoint
 
-        # Set cached memory_id
+        # Set cached memory_id for this test
         entrypoint._memory_id = "cached_memory_id"
 
         result = entrypoint._get_or_create_memory()
 
         assert result == "cached_memory_id"
         mock_memory_client_class.assert_not_called()
-
-        # Reset for other tests
-        entrypoint._memory_id = None

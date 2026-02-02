@@ -151,6 +151,7 @@ def invoke(payload: dict) -> dict:
         Response dictionary containing:
             - result: Agent's response message
             - session_id: Session identifier used
+            - error: Error message (only present on failure)
     """
     # Extract parameters from payload
     user_message = payload.get("prompt", "今日のニュースを教えて")
@@ -159,16 +160,23 @@ def invoke(payload: dict) -> dict:
     )
     actor_id = payload.get("actor_id", "default_user")
 
-    # Create agent for this session
-    agent = _create_agent(session_id=session_id, actor_id=actor_id)
+    try:
+        # Create agent for this session
+        agent = _create_agent(session_id=session_id, actor_id=actor_id)
 
-    # Process the user message
-    result = agent(user_message)
+        # Process the user message
+        result = agent(user_message)
 
-    return {
-        "result": result.message,
-        "session_id": session_id,
-    }
+        return {
+            "result": result.message,
+            "session_id": session_id,
+        }
+    except Exception as e:
+        return {
+            "result": f"エラーが発生しました: {e!s}",
+            "session_id": session_id,
+            "error": str(e),
+        }
 
 
 if __name__ == "__main__":
