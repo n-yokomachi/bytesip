@@ -165,6 +165,7 @@ class TestGetOrCreateMemory:
         assert result == "new_memory_id"
         mock_client.create_memory.assert_called_once()
 
+    @patch("entrypoint.MEMORY_NAME", "test-memory-name")
     @patch("entrypoint.MemoryClient")
     def test_reuses_existing_memory(
         self, mock_memory_client_class: MagicMock
@@ -175,7 +176,7 @@ class TestGetOrCreateMemory:
         mock_client = MagicMock()
         mock_client.list_memories.return_value = {
             "memories": [
-                {"name": "bytesip-agent-memory", "id": "existing_memory_id"},
+                {"name": "test-memory-name", "id": "existing_memory_id"},
             ]
         }
         mock_memory_client_class.return_value = mock_client
