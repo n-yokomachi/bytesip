@@ -110,10 +110,10 @@
 ---
 
 - [ ] 6. AgentCore デプロイメント
-- [ ] 6.1 agentcore-starter-toolkit セットアップ
+- [x] 6.1 agentcore-starter-toolkit セットアップ
   - `pip install bedrock-agentcore-starter-toolkit` でツールキットをインストール
   - `agent/` ディレクトリにエージェントプロジェクトを作成
-  - エージェントエントリポイント（bytesip_agent.py）の作成
+  - エージェントエントリポイント（entrypoint.py）の作成
   - _Requirements: 1.1_
 
 - [ ] 6.2 AgentCore 設定とデプロイ

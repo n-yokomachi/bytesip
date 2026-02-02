@@ -1,0 +1,23 @@
+# AgentCore Configuration for ByteSip Agent
+# This configuration is used by the bedrock-agentcore-starter-toolkit
+
+name: bytesip-agent
+description: IT/AI news curation agent for engineers
+
+# Agent entrypoint
+entrypoint: entrypoint.py
+
+# Runtime configuration
+runtime:
+  timeout: 300  # 5 minutes
+  memory: 512   # MB
+
+# Memory configuration (STM enabled)
+memory:
+  enabled: true
+  type: stm  # Short-term memory only for MVP
+
+# Environment variables
+environment:
+  AWS_REGION: ap-northeast-1
+  BYTESIP_MEMORY_NAME: bytesip-agent-memory
