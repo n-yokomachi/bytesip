@@ -7,15 +7,26 @@ with TTL support and per-source item limits.
 import time
 from typing import Any
 
+import boto3
 from boto3.dynamodb.conditions import Key
 
-from .config import (
-    CACHE_TTL_SECONDS,
-    DYNAMODB_PK_PREFIX,
-    DYNAMODB_SK_ITEM_PREFIX,
-    MAX_ITEMS_PER_SOURCE,
-)
-from .models import NewsItem, SourceType
+# Support both relative imports (local) and package imports (Lambda)
+try:
+    from .config import (
+        CACHE_TTL_SECONDS,
+        DYNAMODB_PK_PREFIX,
+        DYNAMODB_SK_ITEM_PREFIX,
+        MAX_ITEMS_PER_SOURCE,
+    )
+    from .models import NewsItem, SourceType
+except ImportError:
+    from config import (
+        CACHE_TTL_SECONDS,
+        DYNAMODB_PK_PREFIX,
+        DYNAMODB_SK_ITEM_PREFIX,
+        MAX_ITEMS_PER_SOURCE,
+    )
+    from models import NewsItem, SourceType
 
 
 class CacheManager:
@@ -25,13 +36,27 @@ class CacheManager:
     with automatic TTL management and per-source limits.
     """
 
-    def __init__(self, table: Any) -> None:
-        """Initialize CacheManager with a DynamoDB table.
+    def __init__(
+        self,
+        table_name: str,
+        endpoint_url: str | None = None,
+        region_name: str | None = None,
+    ) -> None:
+        """Initialize CacheManager with DynamoDB configuration.
 
         Args:
-            table: boto3 DynamoDB Table resource
+            table_name: Name of the DynamoDB table
+            endpoint_url: Custom endpoint URL (for DynamoDB Local)
+            region_name: AWS region name
         """
-        self._table = table
+        dynamodb_kwargs: dict[str, Any] = {}
+        if endpoint_url:
+            dynamodb_kwargs["endpoint_url"] = endpoint_url
+        if region_name:
+            dynamodb_kwargs["region_name"] = region_name
+
+        dynamodb = boto3.resource("dynamodb", **dynamodb_kwargs)
+        self._table = dynamodb.Table(table_name)
 
     def get(self, source: SourceType) -> list[NewsItem] | None:
         """Retrieve cached news items for a source.

@@ -6,9 +6,15 @@ from multiple news sources with cache-first strategy and graceful degradation.
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .cache_manager import CacheManager
-from .handlers.base import BaseHandler
-from .models import FetchNewsResponse, NewsItem, SourceError, SourceType
+# Support both relative imports (local) and package imports (Lambda)
+try:
+    from .cache_manager import CacheManager
+    from .handlers.base import BaseHandler
+    from .models import FetchNewsResponse, NewsItem, SourceError, SourceType
+except ImportError:
+    from cache_manager import CacheManager
+    from handlers.base import BaseHandler
+    from models import FetchNewsResponse, NewsItem, SourceError, SourceType
 
 
 class NewsFetcher:

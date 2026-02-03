@@ -4,8 +4,13 @@ from datetime import datetime, timedelta
 
 import requests
 
-from ..models import NewsItem, SourceError, generate_news_id
-from .base import BaseHandler
+# Support both relative imports (local) and package imports (Lambda)
+try:
+    from ..models import NewsItem, SourceError, generate_news_id
+    from .base import BaseHandler
+except ImportError:
+    from models import NewsItem, SourceError, generate_news_id
+    from handlers.base import BaseHandler
 
 
 class GitHubHandler(BaseHandler):

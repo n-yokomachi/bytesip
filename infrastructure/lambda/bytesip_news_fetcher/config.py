@@ -68,15 +68,26 @@ def _get_secret(secret_name: str) -> str | None:
     Returns:
         Secret value or None if not found
     """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
     region = os.getenv("AWS_REGION", "")
+    logger.info(f"Getting secret: {secret_name}, AWS_REGION={region}")
+
     if not region:
+        logger.error("AWS_REGION is not set")
         return None
 
     client = boto3.client("secretsmanager", region_name=region)
     try:
         response = client.get_secret_value(SecretId=secret_name)
-        return response.get("SecretString")
-    except ClientError:
+        secret_value = response.get("SecretString")
+        if secret_value:
+            logger.info(f"Successfully retrieved secret: {secret_name}")
+        return secret_value
+    except ClientError as e:
+        logger.error(f"Failed to get secret {secret_name}: {e}")
         return None
 
 

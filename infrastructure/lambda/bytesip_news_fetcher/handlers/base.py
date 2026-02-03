@@ -2,7 +2,11 @@
 
 from abc import ABC, abstractmethod
 
-from ..models import NewsItem
+# Support both relative imports (local) and package imports (Lambda)
+try:
+    from ..models import NewsItem
+except ImportError:
+    from models import NewsItem
 
 
 class BaseHandler(ABC):
