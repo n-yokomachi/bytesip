@@ -6,6 +6,10 @@ supporting both local development and AWS deployment.
 
 import os
 from dataclasses import dataclass
+from functools import lru_cache
+
+import boto3
+from botocore.exceptions import ClientError
 
 
 @dataclass
@@ -54,19 +58,71 @@ def get_dynamodb_config() -> DynamoDBConfig:
     )
 
 
-def get_external_api_config() -> ExternalAPIConfig:
-    """Get external API configuration from environment variables.
+@lru_cache(maxsize=10)
+def _get_secret(secret_name: str) -> str | None:
+    """Get secret value from AWS Secrets Manager.
 
-    Environment Variables:
-        QIITA_ACCESS_TOKEN: Qiita API access token
-        GITHUB_ACCESS_TOKEN: GitHub Personal Access Token
+    Args:
+        secret_name: Name of the secret in Secrets Manager
+
+    Returns:
+        Secret value or None if not found
+    """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    region = os.getenv("AWS_REGION", "")
+    logger.info(f"Getting secret: {secret_name}, AWS_REGION={region}")
+
+    if not region:
+        logger.error("AWS_REGION is not set")
+        return None
+
+    client = boto3.client("secretsmanager", region_name=region)
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+        secret_value = response.get("SecretString")
+        if secret_value:
+            logger.info(f"Successfully retrieved secret: {secret_name}")
+        return secret_value
+    except ClientError as e:
+        logger.error(f"Failed to get secret {secret_name}: {e}")
+        return None
+
+
+def get_external_api_config() -> ExternalAPIConfig:
+    """Get external API configuration.
+
+    Supports two modes:
+    1. Direct environment variables (local development):
+       - QIITA_ACCESS_TOKEN
+       - GITHUB_ACCESS_TOKEN
+    2. Secrets Manager (Lambda deployment):
+       - QIITA_SECRET_NAME → reads from Secrets Manager
+       - GITHUB_SECRET_NAME → reads from Secrets Manager
 
     Returns:
         ExternalAPIConfig instance
     """
+    # Try direct environment variables first (local development)
+    qiita_token = os.getenv("QIITA_ACCESS_TOKEN")
+    github_token = os.getenv("GITHUB_ACCESS_TOKEN")
+
+    # If not set, try Secrets Manager (Lambda deployment)
+    if not qiita_token:
+        qiita_secret_name = os.getenv("QIITA_SECRET_NAME")
+        if qiita_secret_name:
+            qiita_token = _get_secret(qiita_secret_name)
+
+    if not github_token:
+        github_secret_name = os.getenv("GITHUB_SECRET_NAME")
+        if github_secret_name:
+            github_token = _get_secret(github_secret_name)
+
     return ExternalAPIConfig(
-        qiita_access_token=os.getenv("QIITA_ACCESS_TOKEN"),
-        github_access_token=os.getenv("GITHUB_ACCESS_TOKEN"),
+        qiita_access_token=qiita_token,
+        github_access_token=github_token,
     )
 
 

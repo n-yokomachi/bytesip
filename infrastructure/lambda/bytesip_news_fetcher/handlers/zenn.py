@@ -2,8 +2,13 @@
 
 import feedparser
 
-from ..models import NewsItem, SourceError, generate_news_id
-from .base import BaseHandler
+# Support both relative imports (local) and package imports (Lambda)
+try:
+    from ..models import NewsItem, SourceError, generate_news_id
+    from .base import BaseHandler
+except ImportError:
+    from models import NewsItem, SourceError, generate_news_id
+    from handlers.base import BaseHandler
 
 
 class ZennHandler(BaseHandler):

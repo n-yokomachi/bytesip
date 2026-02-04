@@ -74,38 +74,43 @@ export class ByteSipStack extends cdk.Stack {
     qiitaSecret: secretsmanager.ISecret;
     githubSecret: secretsmanager.ISecret;
   } {
-    const qiitaToken = process.env.QIITA_ACCESS_TOKEN ?? "";
-    const githubToken = process.env.GITHUB_ACCESS_TOKEN ?? "";
+    const qiitaToken = process.env.QIITA_ACCESS_TOKEN;
+    const githubToken = process.env.GITHUB_ACCESS_TOKEN;
 
     const qiitaSecretName = `bytesip/${this.deployEnvironment}/qiita-access-token`;
     const githubSecretName = `bytesip/${this.deployEnvironment}/github-access-token`;
 
-    // Use CfnSecret to avoid SecretString/GenerateSecretString conflict
-    const qiitaCfnSecret = new secretsmanager.CfnSecret(
-      this,
-      "QiitaAccessToken",
-      {
-        name: qiitaSecretName,
-        secretString: qiitaToken,
+    // Only create/update secrets if tokens are provided via environment variables
+    // Otherwise, just reference existing secrets
+    if (qiitaToken) {
+      const qiitaCfnSecret = new secretsmanager.CfnSecret(
+        this,
+        "QiitaAccessToken",
+        {
+          name: qiitaSecretName,
+          secretString: qiitaToken,
+        }
+      );
+      if (this.deployEnvironment === "development") {
+        qiitaCfnSecret.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
       }
-    );
-
-    const githubCfnSecret = new secretsmanager.CfnSecret(
-      this,
-      "GitHubAccessToken",
-      {
-        name: githubSecretName,
-        secretString: githubToken,
-      }
-    );
-
-    // Apply removal policy for development
-    if (this.deployEnvironment === "development") {
-      qiitaCfnSecret.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
-      githubCfnSecret.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
     }
 
-    // Import as ISecret for grant operations
+    if (githubToken) {
+      const githubCfnSecret = new secretsmanager.CfnSecret(
+        this,
+        "GitHubAccessToken",
+        {
+          name: githubSecretName,
+          secretString: githubToken,
+        }
+      );
+      if (this.deployEnvironment === "development") {
+        githubCfnSecret.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
+      }
+    }
+
+    // Import secrets for grant operations (assumes secrets exist)
     const qiitaSecret = secretsmanager.Secret.fromSecretNameV2(
       this,
       "QiitaSecretRef",
@@ -117,30 +122,34 @@ export class ByteSipStack extends cdk.Stack {
       githubSecretName
     );
 
-    // Ensure CfnSecrets are created before importing
-    qiitaSecret.node.addDependency(qiitaCfnSecret);
-    githubSecret.node.addDependency(githubCfnSecret);
-
     return { qiitaSecret, githubSecret };
   }
 
   private createLambdaFunction(): lambda.Function {
-    const lambdaCodePath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "lambda",
-      "bytesip_news_fetcher"
-    );
+    const lambdaBasePath = path.join(__dirname, "..", "..", "lambda");
+    const lambdaCodePath = path.join(lambdaBasePath, "bytesip_news_fetcher");
 
     return new lambda.Function(this, "NewsFetcherFunction", {
       functionName: `bytesip-news-fetcher-${this.deployEnvironment}`,
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "handler.lambda_handler",
-      code: lambda.Code.fromAsset(lambdaCodePath),
+      code: lambda.Code.fromAsset(lambdaBasePath, {
+        bundling: {
+          image: lambda.Runtime.PYTHON_3_12.bundlingImage,
+          command: [
+            "bash",
+            "-c",
+            [
+              "pip install requests feedparser -t /asset-output",
+              "cp -r bytesip_news_fetcher/* /asset-output/",
+            ].join(" && "),
+          ],
+        },
+      }),
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       environment: {
+        // AWS_REGION is automatically set by Lambda runtime
         DYNAMODB_TABLE_NAME: this.newsCacheTable.tableName,
         QIITA_SECRET_NAME: this.qiitaSecret.secretName,
         GITHUB_SECRET_NAME: this.githubSecret.secretName,

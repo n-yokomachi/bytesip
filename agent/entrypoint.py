@@ -19,10 +19,11 @@ from strands.models import BedrockModel
 from bytesip_agent.tools import fetch_news
 
 # Configuration from environment variables
-AWS_REGION = os.environ.get("AWS_REGION", "")
-MEMORY_NAME = os.environ.get("BYTESIP_MEMORY_NAME", "")
+AWS_REGION = os.environ.get("AWS_REGION", "ap-northeast-1")
+MEMORY_NAME = os.environ.get("BYTESIP_MEMORY_NAME", "bytesip_mem")
 # Memory ID from toolkit deployment (set by agentcore deploy)
-AGENTCORE_MEMORY_ID = os.environ.get("AGENTCORE_MEMORY_ID")
+# Fallback to known memory ID if not provided
+AGENTCORE_MEMORY_ID = os.environ.get("AGENTCORE_MEMORY_ID", "bytesip_mem-Y05j1y8kDc")
 
 # System prompt for the ByteSip agent
 SYSTEM_PROMPT = """\

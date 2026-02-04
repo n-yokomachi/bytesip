@@ -103,10 +103,19 @@ def _get_default_client() -> FetchNewsClient:
     """Get or create the default FetchNewsClient."""
     global _default_client
     if _default_client is None:
+        import os
+
         import boto3
 
-        lambda_client = boto3.client("lambda")
-        _default_client = FetchNewsClient(lambda_client=lambda_client)
+        region = os.environ.get("AWS_REGION", "ap-northeast-1")
+        env = os.environ.get("BYTESIP_ENVIRONMENT", "development")
+        function_name = f"bytesip-news-fetcher-{env}"
+
+        lambda_client = boto3.client("lambda", region_name=region)
+        _default_client = FetchNewsClient(
+            lambda_client=lambda_client,
+            function_name=function_name,
+        )
     return _default_client
 
 
@@ -142,19 +151,33 @@ def fetch_news(
         - items: List of news items with id, title, url, summary, tags, source
         - errors: List of any errors that occurred (if any sources failed)
     """
-    fetch_client = _get_default_client()
+    import logging
 
-    response = fetch_client.fetch(
-        sources=sources,
-        tags=tags,
-        force_refresh=force_refresh,
-    )
+    logger = logging.getLogger(__name__)
 
-    result: dict = {
-        "items": [asdict(item) for item in response.items],
-    }
+    try:
+        fetch_client = _get_default_client()
+        logger.info(f"Invoking Lambda: {fetch_client._function_name}")
 
-    if response.errors:
-        result["errors"] = [asdict(error) for error in response.errors]
+        response = fetch_client.fetch(
+            sources=sources,
+            tags=tags,
+            force_refresh=force_refresh,
+        )
 
-    return result
+        result: dict = {
+            "items": [asdict(item) for item in response.items],
+        }
+
+        if response.errors:
+            result["errors"] = [asdict(error) for error in response.errors]
+
+        logger.info(f"Fetched {len(response.items)} items")
+        return result
+
+    except Exception as e:
+        logger.error(f"fetch_news error: {type(e).__name__}: {e}")
+        return {
+            "items": [],
+            "errors": [{"source": "system", "error_type": "lambda_error", "message": str(e)}],
+        }
