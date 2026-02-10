@@ -1,6 +1,7 @@
 """Qiita API handler for fetching articles."""
 
 import re
+from datetime import datetime, timedelta
 
 import requests
 
@@ -23,6 +24,8 @@ class QiitaHandler(BaseHandler):
     BASE_URL = "https://qiita.com/api/v2/items"
     SUMMARY_MAX_LENGTH = 200
     REQUEST_TIMEOUT = 10
+    DAYS_LOOKBACK = 7
+    MIN_STOCKS = 5
 
     def __init__(self, access_token: str) -> None:
         """Initialize QiitaHandler.
@@ -83,13 +86,21 @@ class QiitaHandler(BaseHandler):
         Returns:
             Dictionary of query parameters
         """
-        params: dict = {"per_page": 30}
+        date_threshold = datetime.now() - timedelta(days=self.DAYS_LOOKBACK)
+        date_str = date_threshold.strftime("%Y-%m-%d")
+
+        query_parts = [
+            f"created:>={date_str}",
+            f"stocks:>={self.MIN_STOCKS}",
+        ]
 
         if tags:
-            tag_query = " OR ".join(f"tag:{tag}" for tag in tags)
-            params["query"] = tag_query
+            query_parts.extend(f"tag:{tag}" for tag in tags)
 
-        return params
+        return {
+            "per_page": 30,
+            "query": " ".join(query_parts),
+        }
 
     def _parse_response(self, items: list[dict]) -> list[NewsItem]:
         """Parse Qiita API response into NewsItem objects.
