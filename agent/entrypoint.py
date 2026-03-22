@@ -21,9 +21,8 @@ from bytesip_agent.tools import fetch_news
 # Configuration from environment variables
 AWS_REGION = os.environ.get("AWS_REGION", "ap-northeast-1")
 MEMORY_NAME = os.environ.get("BYTESIP_MEMORY_NAME", "bytesip_mem")
-# Memory ID from toolkit deployment (set by agentcore deploy)
-# Fallback to known memory ID if not provided
-AGENTCORE_MEMORY_ID = os.environ.get("AGENTCORE_MEMORY_ID", "bytesip_mem-Y05j1y8kDc")
+# Memory ID is set by CDK via environment variable on the Runtime
+AGENTCORE_MEMORY_ID = os.environ.get("AGENTCORE_MEMORY_ID")
 
 # System prompt for the ByteSip agent
 SYSTEM_PROMPT = """\
