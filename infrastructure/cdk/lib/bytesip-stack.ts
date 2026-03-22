@@ -4,6 +4,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
+import { AgentCoreConstruct } from "./agentcore-construct";
 
 export interface ByteSipStackProps extends cdk.StackProps {
   /**
@@ -48,6 +49,12 @@ export class ByteSipStack extends cdk.Stack {
     this.newsCacheTable.grantReadWriteData(this.newsFetcherFunction);
     this.qiitaSecret.grantRead(this.newsFetcherFunction);
     this.githubSecret.grantRead(this.newsFetcherFunction);
+
+    // AgentCore resources (Runtime, Memory, Gateway)
+    new AgentCoreConstruct(this, "AgentCore", {
+      environment: this.deployEnvironment,
+      newsFetcherFunction: this.newsFetcherFunction,
+    });
   }
 
   private createDynamoDBTable(): dynamodb.Table {
